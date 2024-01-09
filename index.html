@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Q2</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+    <link href="./style.css" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- First section -->
+    <section class="steps">
+      <div class="row">
+        <div class="col-lg-6 step-1">
+          <div>
+            <label for="fileInput">Select CSV or JSON file:</label>
+            <input
+              type="file"
+              id="fileInput"
+              name="fileInput"
+              accept=".csv, .json"
+            />
+          </div>
+        </div>
+        <div class="col-lg-6 step-2">
+          <div>
+            <label for="fileType">File Type:</label>
+            <select id="fileType" name="fileType">
+              <option value="csv">CSV</option>
+              <option value="json">JSON</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="encodingType">Encoding Type:</label>
+            <select id="encodingType" name="encodingType">
+              <option value="utf-8">UTF-8</option>
+              <!-- Add more encoding options as needed -->
+            </select>
+          </div>
+
+          <div>
+            <label for="delimiter">Delimiter:</label>
+            <select id="delimiter" name="delimiter">
+              <option value="comma">Comma (,)</option>
+              <option value="semicolon">Semicolon (;)</option>
+              <!-- Add more delimiter options as needed -->
+            </select>
+          </div>
+
+          <div>
+            <input type="checkbox" id="hasHeader" name="hasHeader" />
+            <label for="hasHeader">File has header</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-lg-12 step-3">
+          <div>
+            <label for="firstMenu">Select an option:</label>
+            <select id="firstMenuList" multiple>
+              <option id="Product ID" class="menu-item">Product ID</option>
+              <option id="SubCategory" class="menu-item">SubCategory</option>
+              <option id="Title" class="menu-item">Title</option>
+              <option id="Price" class="menu-item">Price</option>
+              <option id="Popularity" class="menu-item">Popularity</option>
+              <option id="Description" class="menu-item">Description</option>
+              <option id="Rating" class="menu-item">Rating</option>
+              <option id="UTM Score" class="menu-item">UTM Score</option>
+              <option id="UTM Medium" class="menu-item">UTM Medium</option>
+            </select>
+            <button onclick="addToFinalMenu()">Add to Final Menu</button>
+            <button onclick="removeFromFirstMenu()">Remove Option</button>
+          </div>
+
+          <div class="final-menu">
+            <label>Final Menu:</label>
+            <select id="finalMenuList" multiple></select>
+
+            <button onclick="removeFromFinalMenu()">Remove Option</button>
+          </div>
+
+          <button onclick="clearFinalMenu()">Clear Final Menu</button>
+
+          <button onclick="showTable()">Show Table</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="table-section" style="display: none">
+      <div class="row">
+        <div class="col-lg-12">
+          <h2>Table</h2>
+          <div id="tableContainer"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Menu JS -->
+    <script>
+      function addToFinalMenu() {
+        var firstMenu = document.getElementById("firstMenuList");
+        var finalMenu = document.getElementById("finalMenuList");
+
+        for (var i = 0; i < firstMenu.options.length; i++) {
+          if (firstMenu.options[i].selected) {
+            var optionId = firstMenu.options[i].id;
+            var optionText = getOptionText(optionId);
+
+            // Check if the option is already in the final menu
+            if (!optionExistsInFinalMenu(optionId)) {
+              var optionElement = document.createElement("option");
+              optionElement.value = optionId;
+              optionElement.textContent = optionText;
+
+              finalMenu.add(optionElement);
+            }
+          }
+        }
+      }
+
+      function optionExistsInFinalMenu(optionId) {
+        var finalMenu = document.getElementById("finalMenuList");
+
+        for (var i = 0; i < finalMenu.options.length; i++) {
+          if (finalMenu.options[i].value === optionId) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      function getOptionText(optionId) {
+        return optionId;
+      }
+
+      function removeFromFinalMenu() {
+        var finalMenu = document.getElementById("finalMenuList");
+
+        for (var i = finalMenu.options.length - 1; i >= 0; i--) {
+          if (finalMenu.options[i].selected) {
+            finalMenu.remove(i);
+          }
+        }
+      }
+
+      function removeFromFirstMenu() {
+        var firstMenu = document.getElementById("firstMenuList");
+
+        for (var i = firstMenu.options.length - 1; i >= 0; i--) {
+          if (
+            firstMenu.options[i].classList.contains("menu-item") &&
+            firstMenu.options[i].selected
+          ) {
+            firstMenu.remove(i);
+          }
+        }
+      }
+
+      function clearFinalMenu() {
+        var finalMenu = document.getElementById("finalMenuList");
+        finalMenu.innerHTML = "";
+      }
+
+      function showTable() {
+        var fileInput = document.getElementById("fileInput");
+        var fileType = document.getElementById("fileType").value;
+
+        if (fileInput.files.length === 0) {
+          alert("Please upload a file.");
+          return;
+        }
+
+        var file = fileInput.files[0];
+        var reader = new FileReader();
+
+        reader.onload = function (e) {
+          var content = e.target.result;
+
+          // Parse CSV or JSON based on the selected file type
+          var data;
+          if (fileType === "csv") {
+            data = parseCSV(content);
+          } else if (fileType === "json") {
+            data = JSON.parse(content);
+          }
+
+          // Display the table with selected columns
+          displayTable(data);
+        };
+
+        reader.readAsText(file);
+      }
+
+      function displayTable(data) {
+        var finalMenu = document.getElementById("finalMenuList");
+        var selectedColumns = Array.from(finalMenu.options).map(
+          (option) => option.value
+        );
+
+        console.log("Selected Columns:", selectedColumns);
+        console.log("Data:", data);
+
+        var tableHTML =
+          "<table class='table'><thead><tr>" +
+          selectedColumns.map((column) => "<th>" + column + "</th>").join("") +
+          "</tr></thead><tbody>";
+
+        // Check if "products" property exists in data
+        if (data.hasOwnProperty("products")) {
+          // Iterate through product IDs in the "products" property
+          for (var key in data.products) {
+            if (
+              data.products.hasOwnProperty(key) &&
+              typeof data.products[key] === "object"
+            ) {
+              var product = data.products[key];
+              tableHTML += "<tr>";
+              // Iterate through selected columns
+              for (var j = 0; j < selectedColumns.length; j++) {
+                var column = selectedColumns[j];
+                // Check if the property exists in the product
+                if (product.hasOwnProperty(column)) {
+                  var cellValue = product[column];
+                  tableHTML += "<td>" + cellValue + "</td>";
+                } else {
+                  // If the property does not exist, display an empty cell
+                  tableHTML += "<td></td>";
+                }
+              }
+              tableHTML += "</tr>";
+            }
+          }
+        }
+
+        tableHTML += "</tbody></table>";
+
+        // Display the table in the tableContainer
+        var tableContainer = document.getElementById("tableContainer");
+        tableContainer.innerHTML = tableHTML;
+
+        // Show the table section
+        document.querySelector(".table-section").style.display = "block";
+      }
+    </script>
+
+    <!-- BootStrap JS -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>
